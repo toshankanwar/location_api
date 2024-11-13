@@ -112,7 +112,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// Driver API to save location
+// Driver API to save location (updates every 5 seconds)
 app.post("/api/location", authenticateToken, async (req, res) => {
   if (req.user.role !== "driver") {
     return res
@@ -128,14 +128,12 @@ app.post("/api/location", authenticateToken, async (req, res) => {
       { latitude, longitude, updatedAt: new Date() },
       { upsert: true, new: true }
     );
-    res.status(201).json({ message: "Location saved successfully", location });
+    res.status(201).json({ message: "Location updated successfully", location });
   } catch (error) {
-    res.status(500).json({ message: "Error saving location", error });
+    res.status(500).json({ message: "Error updating location", error });
   }
 });
 
-// Stop sharing location
-// Stop sharing location
 // Stop sharing location
 app.post("/api/location/stop", authenticateToken, async (req, res) => {
   if (req.user.role !== "driver") {
@@ -149,8 +147,7 @@ app.post("/api/location/stop", authenticateToken, async (req, res) => {
   const username = req.user.username;
 
   try {
-    // Delete all location data for the driver
-    const result = await Location.deleteMany({ username });
+    const result = await Location.deleteOne({ username });
 
     if (result.deletedCount === 0) {
       return res
@@ -159,7 +156,7 @@ app.post("/api/location/stop", authenticateToken, async (req, res) => {
     }
 
     res.status(200).json({
-      message: "Location sharing stopped, and all data removed successfully.",
+      message: "Location sharing stopped, and data removed successfully.",
     });
   } catch (error) {
     console.error("Error stopping location sharing:", error);
@@ -176,7 +173,6 @@ app.get("/api/location", authenticateToken, async (req, res) => {
   }
 
   try {
-    // Retrieve only active driver locations from the database
     const locations = await Location.find().sort({ updatedAt: -1 });
     res.status(200).json(locations);
   } catch (error) {
